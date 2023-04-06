@@ -10,9 +10,8 @@ void main() async {
   Map<String, dynamic> query = Query('water').queryHeaders;
   NetworkHelper newtorkHelper = NetworkHelper(url: url, params: query);
   Map<String, dynamic> data = await newtorkHelper.getData();
-  print(data['imageobject']);
-  Pagemap pagemap = Pagemap.fromJson(data);
-  print(pagemap.toJson());
+  JSON jsonModel = JSON.fromJson(data);
+  print(jsonModel.items![0].pagemap?.cseImage![0].src);
 
   // runApp(const MyApp());
 }
