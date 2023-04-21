@@ -1,3 +1,4 @@
+import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
@@ -20,12 +21,13 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _controller = TextEditingController();
 
   late FocusNode myFocusNode;
+  late PageController _pageController;
   late UserBloc userBloc;
 
   @override
   void initState() {
     super.initState();
-
+    _pageController = PageController(viewportFraction: 0.8);
     myFocusNode = FocusNode();
     userBloc = UserBloc(NetworkHelper(
         url: "https://customsearch.googleapis.com/customsearch/v1"));
@@ -47,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    int activePage = 1;
     return MultiBlocProvider(
         providers: [
           BlocProvider<UserBloc>(
@@ -94,28 +97,57 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: BlocBuilder<UserBloc, UserState>(
                     builder: (context, state) {
                       if (state is UserInitialState) {
-                        return Center(
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 20.0,
-                                decoration:
-                                    const BoxDecoration(color: Colors.black),
-                              ),
-                            ],
-                          ),
-                        );
+                        return const Center();
                       }
                       if (state is UserLoadingState) {
                         return const Center(
                           child: CircularProgressIndicator(),
                         );
                       }
-                      List<Object?> imageUrl = state.props;
-                      print(state.props.toString());
-                      return Center(
-                          child: Image.network(state.props[0].toString() ??
-                              'https://cataas.com/cat'));
+                      if (state is UserLoadedState) {
+                        return Center(
+                          child: SizedBox(
+                            height: 500,
+                            width: MediaQuery.of(context).size.width,
+                            child: PageView.builder(
+                                itemCount: state.urls.length,
+                                pageSnapping: true,
+                                controller: _pageController,
+                                onPageChanged: (page) {
+                                  setState(() {
+                                    activePage = page;
+                                  });
+                                },
+                                itemBuilder: (context, pagePosition) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      showImageViewer(
+                                          context,
+                                          Image.network(
+                                            state.urls[pagePosition],
+                                          ).image, onViewerDismissed: () {
+                                        print("dismissed");
+                                      });
+                                    },
+                                    child: Container(
+                                      margin: EdgeInsets.all(10),
+                                      child: Image.network(
+                                        state.urls[pagePosition],
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                          ),
+                        );
+                      }
+                      if (state is UserErrorState) {
+                        print(state.error);
+                      }
+                      return const Center(
+                        child:
+                            Text("Can't find any images. Try something else!"),
+                      );
                     },
                   ),
                 )

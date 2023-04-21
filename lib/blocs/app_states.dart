@@ -18,7 +18,6 @@ class UserInitialState extends UserState {
 class UserLoadedState extends UserState {
   final List<String> urls;
   UserLoadedState(this.urls);
-
   @override
   List<Object?> get props => [urls];
 }
